@@ -9,12 +9,38 @@ class Character(db.Model):
     id = db.Column(db.String(40), primary_key=True)
     name = db.Column(db.String(200), nullable=False)
     created = db.Column(db.DateTime, default=datetime.utcnow())
-    aliases = db.relationship('Alias', backref='character') # Character.aliases -> entire Alias objects # Alias.character -> entire Character object
+    aliases = db.relationship('Alias', backref='character', cascade='all, delete-orphan') # Character.aliases -> entire Alias objects # Alias.character -> entire Character object
     
     def __init__(self, name):
         self.name = name
         self.id = str(uuid4())
 
+    def to_dict(self):
+        d = {
+            'id': self.id,
+            'name': self.name,
+            'last known alias': self.calc_last_alias(),
+            'created': date.isoformat(self.created), # 'YYYY-MM-DD'
+            'aliases': None # maybe grab the aliases here, maybe do it in the routing
+        }
+        if self.aliases:
+            d['aliases'] = [x.to_dict(full=False) for x in self.aliases]
+        return d
+
+    def calc_last_alias(self):
+        lsa = None
+        for alias in self.aliases:
+            # lsa.last_seen - alias.last_seen
+            if lsa and alias.last_seen:
+                td = lsa.last_seen - alias.last_seen
+                if td.days < 0:
+                    lsa = alias
+            elif alias.last_seen:
+                lsa = alias
+        return lsa.name if lsa else None
+            
+                
+        
 
 class Alias(db.Model):
     id = db.Column(db.String(40), primary_key=True)
@@ -34,12 +60,19 @@ class Alias(db.Model):
             except:
                 pass
 
-    def to_dict(self):
+    def to_dict(self, full=True):
+        x = self.last_seen
+        if x:
+            x = date.isoformat(self.last_seen)
         return {
             'id': self.id,
             'name': self.name,
             'real_character_id': self.real_character,
             'real_character_name': self.character.name,
-            'last seen': date.isoformat(self.last_seen)
+            'last seen': x
+        } if full else {
+            'id': self.id,
+            'name': self.name,
+            'last seen': x
         }
             
