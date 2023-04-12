@@ -76,3 +76,17 @@ class Alias(db.Model):
             'last seen': x
         }
             
+class Student:
+    id = db.Column(db.String(40), primary_key=True)
+    name = db.Column(db.String(200), unique=True, nullable=False)
+    cohort = db.Column(db.String(200), nullable=False)
+    calls = db.Column(db.Integer)
+    success = db.Column(db.boolean)
+
+    def __init__(self, name, cohort):
+        self.id = str(uuid4())
+        self.name = name
+        self.cohort = cohort
+        self.calls = 1
+        self.success = False
+
