@@ -76,7 +76,7 @@ class Alias(db.Model):
             'last seen': x
         }
             
-class Student:
+class Student(db.Model):
     id = db.Column(db.String(40), primary_key=True)
     name = db.Column(db.String(200), unique=True, nullable=False)
     cohort = db.Column(db.String(200), nullable=False)

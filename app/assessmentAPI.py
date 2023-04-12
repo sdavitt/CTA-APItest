@@ -16,7 +16,7 @@ def token_required(api_route):
             # if the token is present and valid, allow the request to go through
             return api_route(exists)
         except:
-            return 'Database or server error - message Sam on slack with a screenshot of your call code please', 500
+            return {'Error':'Database or server error - message Sam on slack with a screenshot of your call code please'}, 500
     return decorator_function
 
 
@@ -25,35 +25,54 @@ def authme():
     data = request.get_json()
     cs = {'Foxes', 'Sp', 'Padawans', 'Cdn', 'Rangers', 'Kekambas', 'Thieves'}
     if data['cohort'].title() not in cs:
-        return 'Invalid Cohort Name', 400
+        return {'Error':'Invalid Cohort Name'}, 400
     if not data['name']:
-        return 'Name not provided', 400
-    if db.query.filter_by(name=data['name']):
-        return 'You already have an access token - check your prior calls.', 400
+        return {'Name not provided'}, 400
+    x = Student.query.filter_by(name=data['name']).first()
+    print(x)
+    if x:
+        x.calls += 1
+        db.session.commit()
+        return {'Error':'You already have an access token - check your prior calls.'}, 400
     try:
         ns = Student(data['name'], data['cohort'])
         db.session.add(ns)
         db.session.commit()
         return {'Access Token': ns.id}, 200
     except:
-        return 'Database or server error - message Sam on slack with a screenshot of your call code please', 500
+        return {'Error':'Database or server error - message Sam on slack with a screenshot of your call code please'}, 500
+    
+@app.route('/forgot/<string:name>', methods=['GET'])
+def forgot(name):
+    try:
+        x = Student.query.filter_by(name=name).first()
+        x.calls += 1
+        db.session.commit()
+        return {'Access Token': x.id}, 200
+    except:
+        return {'Error': 'Unfortunately this route has bad error messaging... its a challenge!'}, 400
     
 @app.route('/answer', methods=['POST'])
 @token_required
 def answer(student):
     data = request.get_json()
-    checker = answer_check(data)
+    checker = answer_check(data['UAMs'])
     if checker:
         student.success = True
-        student.calls += 1
         db.session.commit()
-        return 'Success! You completed the assessment! Send Sam your code on slack.', 200
+        return {'Success': 'You completed the assessment! Send Sam your code on slack.'}, 200
     else:
         student.calls += 1
         db.session.commit()
-        return 'Unsuccessful', 406
+        return {'Unsuccessful': 'Your answer did not pass the tests- try again!'}, 406
 
 
 def answer_check(data):
-    return True
-        
+    if data == [0,2,0,0,0]:
+        return True
+    return False
+
+@app.route('/getdata', methods=['GET'])
+@token_required
+def getdata(student):
+    return {'Data': {'logs': [[0,5],[1,2],[0,2],[0,5],[1,3]], 'k': 5}}, 200
