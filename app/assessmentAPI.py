@@ -20,17 +20,18 @@ def token_required(api_route):
     return decorator_function
 
 
-@app.route('/authme/<string:cohort>/<string:name>', methods=['GET'])
-def authme(cohort, name):
+@app.route('/authme', methods=['GET'])
+def authme():
+    data = request.get_json()
     cs = {'Foxes', 'Sp', 'Padawans', 'Cdn', 'Rangers', 'Kekambas', 'Thieves'}
-    if cohort.title() not in cs:
+    if data['cohort'].title() not in cs:
         return 'Invalid Cohort Name', 400
-    if not name:
+    if not data['name']:
         return 'Name not provided', 400
-    if db.query.filter_by(name=name):
+    if db.query.filter_by(name=data['name']):
         return 'You already have an access token - check your prior calls.', 400
     try:
-        ns = Student(name, cohort)
+        ns = Student(data['name'], data['cohort'])
         db.session.add(ns)
         db.session.commit()
         return {'Access Token': ns.id}, 200

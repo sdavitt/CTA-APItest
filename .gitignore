@@ -1,3 +1,4 @@
 .env
 venv
+tester.py
 __pycache__

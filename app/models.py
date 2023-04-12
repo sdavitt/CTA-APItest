@@ -81,7 +81,7 @@ class Student:
     name = db.Column(db.String(200), unique=True, nullable=False)
     cohort = db.Column(db.String(200), nullable=False)
     calls = db.Column(db.Integer)
-    success = db.Column(db.boolean)
+    success = db.Column(db.Boolean)
 
     def __init__(self, name, cohort):
         self.id = str(uuid4())
